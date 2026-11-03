@@ -1,0 +1,37 @@
+[package]
+name = "ntt_anafis_bench"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.96"
+description = "Benchmarks of ntt_anafis against FLINT and GMP"
+license = "Apache-2.0"
+publish = false
+
+[lib]
+bench = false
+
+[features]
+default = ["std"]
+# Selects kernels at run time; without it the target features fix them.
+std = ["ntt_anafis/std"]
+# Runs the products on the global Rayon pool.
+rayon = ["ntt_anafis/rayon"]
+# Compares with FLINT and GMP installed under the REFERENCE_PREFIX directory.
+reference = []
+
+[dev-dependencies]
+divan = "0.1.21"
+ntt_anafis = { path = "..", default-features = false }
+
+[target.'cfg(all(target_arch = "x86_64", target_pointer_width = "64"))'.dev-dependencies]
+gmp-mpfr-sys = { version = "1.7.1", default-features = false, features = ["force-cross"] }
+rug = { version = "1.30", default-features = false, features = ["integer", "std"] }
+
+[[bench]]
+name = "multiply"
+harness = false
+
+[[bench]]
+name = "reference"
+harness = false
+required-features = ["reference"]

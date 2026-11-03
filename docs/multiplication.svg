@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 724" width="960" height="724" role="img" aria-labelledby="t d">
+<title id="t">Multiplication time per limb and per coefficient, by target</title>
+<desc id="d">AVX-512 IFMA target: at one million limbs ntt_anafis takes 43 ms, FLINT 61 ms, GMP 215 ms. AVX2 target: at one million limbs ntt_anafis takes 51 ms, FLINT 60 ms, GMP 215 ms. The README table repeats these values.</desc>
+<style>
+svg{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.surface{fill:#fcfcfb}.ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#6f6d68}
+.grid{stroke:#e1e0d9}.axis{stroke:#c3c2b7}.leader{stroke:#898781}.ring{stroke:#fcfcfb}
+.c1{stroke:#2a78d6}.c2{stroke:#eb6834}.c3{stroke:#1baf7a}
+.f1{fill:#2a78d6}.f2{fill:#eb6834}.f3{fill:#1baf7a}
+@media (prefers-color-scheme:dark){
+.surface{fill:#1a1a19}.ink{fill:#f0efec}.ink2{fill:#c3c2b7}.muted{fill:#a3a29a}
+.grid{stroke:#2c2c2a}.axis{stroke:#383835}.leader{stroke:#898781}.ring{stroke:#1a1a19}
+.c1{stroke:#3987e5}.c2{stroke:#d95926}.c3{stroke:#199e70}
+.f1{fill:#3987e5}.f2{fill:#d95926}.f3{fill:#199e70}
+}
+text{font-size:12px}
+.title{font-size:18px;font-weight:600}.sub{font-size:13px}.head{font-size:14px;font-weight:600}
+.tick{font-size:11px;font-variant-numeric:tabular-nums}.end{font-size:12px;font-variant-numeric:tabular-nums}
+.line{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+</style>
+<rect class="surface" width="960" height="724" rx="8"/>
+<text class="title ink" x="24" y="34">Multiplication time, target against target</text>
+<text class="sub ink2" x="24" y="56">One thread on one Zen 5 core, each library built for its target. FLINT's transforms are AVX2 on both. Lower is better.</text>
+<line class="line c1" x1="24" y1="80" x2="46" y2="80"/>
+<circle class="f1" cx="35" cy="80" r="4"/>
+<text class="ink2 sub" x="54" y="84.5">ntt_anafis</text>
+<line class="line c2" x1="150.0" y1="80" x2="172.0" y2="80"/>
+<circle class="f2" cx="161.0" cy="80" r="4"/>
+<text class="ink2 sub" x="180.0" y="84.5">FLINT 3.6</text>
+<line class="line c3" x1="268.0" y1="80" x2="290.0" y2="80"/>
+<circle class="f3" cx="279.0" cy="80" r="4"/>
+<text class="ink2 sub" x="298.0" y="84.5">GMP 6.3</text>
+<text class="head ink" x="58" y="122">AVX-512 IFMA target</text>
+<text class="sub ink2" x="58" y="140">Integer products (ns per limb)</text>
+<line class="grid" x1="58" y1="320.1" x2="408" y2="320.1"/>
+<text class="tick muted" x="50" y="323.6" text-anchor="end">20</text>
+<line class="grid" x1="58" y1="262.2" x2="408" y2="262.2"/>
+<text class="tick muted" x="50" y="265.7" text-anchor="end">50</text>
+<line class="grid" x1="58" y1="218.4" x2="408" y2="218.4"/>
+<text class="tick muted" x="50" y="221.9" text-anchor="end">100</text>
+<line class="grid" x1="58" y1="174.6" x2="408" y2="174.6"/>
+<text class="tick muted" x="50" y="178.1" text-anchor="end">200</text>
+<line class="axis" x1="58" y1="360" x2="408" y2="360"/>
+<line class="axis" x1="58.0" y1="360" x2="58.0" y2="364"/>
+<text class="tick muted" x="58.0" y="378" text-anchor="middle">64</text>
+<line class="axis" x1="135.8" y1="360" x2="135.8" y2="364"/>
+<text class="tick muted" x="135.8" y="378" text-anchor="middle">1K</text>
+<line class="axis" x1="213.6" y1="360" x2="213.6" y2="364"/>
+<text class="tick muted" x="213.6" y="378" text-anchor="middle">16K</text>
+<line class="axis" x1="291.3" y1="360" x2="291.3" y2="364"/>
+<text class="tick muted" x="291.3" y="378" text-anchor="middle">256K</text>
+<line class="axis" x1="369.1" y1="360" x2="369.1" y2="364"/>
+<text class="tick muted" x="369.1" y="378" text-anchor="middle">4M</text>
+<line class="axis" x1="408.0" y1="360" x2="408.0" y2="364"/>
+<text class="tick muted" x="408.0" y="378" text-anchor="middle">16M</text>
+<text class="tick muted" x="233.0" y="396" text-anchor="middle">Operand limbs</text>
+<polyline class="line c1" points="58.0,311.7 69.4,325.9 77.4,314.8 88.8,316.5 96.9,317.0 108.3,318.8 116.3,316.0 127.7,315.9 135.8,312.8 147.2,313.5 155.2,308.7 166.6,312.7 174.7,306.7 186.0,309.2 194.1,302.6 205.5,307.3 213.6,298.6 224.9,295.5 233.0,296.8 244.4,291.5 252.4,291.3 263.8,285.3 271.9,284.3 283.3,279.9 291.3,279.7 302.7,276.7 310.8,276.8 322.2,275.5 330.2,274.8 341.6,271.3 349.7,271.9 361.0,269.0 369.1,268.1 380.5,264.9 388.6,266.3 399.9,260.9 408.0,261.9"/>
+<polyline class="line c2" points="58.0,349.7 69.4,331.2 77.4,322.1 88.8,302.6 96.9,295.6 108.3,284.6 116.3,280.2 127.7,273.8 135.8,283.3 147.2,275.5 155.2,282.3 166.6,274.4 174.7,280.9 186.0,273.3 194.1,278.4 205.5,269.6 213.6,274.4 224.9,266.4 233.0,270.6 244.4,267.3 252.4,268.3 263.8,262.5 271.9,263.5 283.3,257.5 291.3,259.8 302.7,256.0 310.8,258.6 322.2,252.4 330.2,253.1 341.6,249.9 349.7,250.2 361.0,247.5 369.1,248.2 380.5,245.3 388.6,245.9 399.9,240.4 408.0,241.1"/>
+<polyline class="line c3" points="58.0,344.4 69.4,330.0 77.4,318.1 88.8,304.9 96.9,295.7 108.3,284.4 116.3,278.3 127.7,268.2 135.8,259.5 147.2,248.3 155.2,241.2 166.6,232.2 174.7,235.0 186.0,228.5 194.1,225.5 205.5,220.4 213.6,220.3 224.9,210.9 233.0,208.1 244.4,205.5 252.4,207.2 263.8,199.1 271.9,193.3 283.3,188.2 291.3,182.4 302.7,180.3 310.8,177.2 322.2,175.7 330.2,173.1 341.6,172.0 349.7,169.8 361.0,171.0 369.1,168.0 380.5,162.0 388.6,166.2 399.9,158.8 408.0,160.0"/>
+<circle class="ring f3" cx="408.0" cy="160.0" r="4" stroke-width="2"/>
+<text class="end ink" x="421.0" y="164.0">252 ns</text>
+<circle class="ring f2" cx="408.0" cy="241.1" r="4" stroke-width="2"/>
+<text class="end ink" x="421.0" y="245.1">70 ns</text>
+<circle class="ring f1" cx="408.0" cy="261.9" r="4" stroke-width="2"/>
+<text class="end ink" x="421.0" y="265.9">50 ns</text>
+<text class="head ink" x="536" y="122">AVX2 target</text>
+<text class="sub ink2" x="536" y="140">Integer products (ns per limb)</text>
+<line class="grid" x1="536" y1="320.1" x2="886" y2="320.1"/>
+<text class="tick muted" x="528" y="323.6" text-anchor="end">20</text>
+<line class="grid" x1="536" y1="262.2" x2="886" y2="262.2"/>
+<text class="tick muted" x="528" y="265.7" text-anchor="end">50</text>
+<line class="grid" x1="536" y1="218.4" x2="886" y2="218.4"/>
+<text class="tick muted" x="528" y="221.9" text-anchor="end">100</text>
+<line class="grid" x1="536" y1="174.6" x2="886" y2="174.6"/>
+<text class="tick muted" x="528" y="178.1" text-anchor="end">200</text>
+<line class="axis" x1="536" y1="360" x2="886" y2="360"/>
+<line class="axis" x1="536.0" y1="360" x2="536.0" y2="364"/>
+<text class="tick muted" x="536.0" y="378" text-anchor="middle">64</text>
+<line class="axis" x1="613.8" y1="360" x2="613.8" y2="364"/>
+<text class="tick muted" x="613.8" y="378" text-anchor="middle">1K</text>
+<line class="axis" x1="691.6" y1="360" x2="691.6" y2="364"/>
+<text class="tick muted" x="691.6" y="378" text-anchor="middle">16K</text>
+<line class="axis" x1="769.3" y1="360" x2="769.3" y2="364"/>
+<text class="tick muted" x="769.3" y="378" text-anchor="middle">256K</text>
+<line class="axis" x1="847.1" y1="360" x2="847.1" y2="364"/>
+<text class="tick muted" x="847.1" y="378" text-anchor="middle">4M</text>
+<line class="axis" x1="886.0" y1="360" x2="886.0" y2="364"/>
+<text class="tick muted" x="886.0" y="378" text-anchor="middle">16M</text>
+<text class="tick muted" x="711.0" y="396" text-anchor="middle">Operand limbs</text>
+<polyline class="line c1" points="536.0,306.4 547.4,304.4 555.4,307.1 566.8,302.5 574.9,302.9 586.3,298.9 594.3,300.5 605.7,296.5 613.8,298.0 625.2,292.6 633.2,294.3 644.6,290.3 652.7,292.3 664.0,286.4 672.1,287.3 683.5,281.3 691.6,282.8 702.9,278.2 711.0,279.9 722.4,276.6 730.4,277.2 741.8,271.9 749.9,272.1 761.3,268.8 769.3,269.7 780.7,265.5 788.8,265.1 800.2,262.7 808.2,263.6 819.6,256.5 827.7,256.6 839.0,250.7 847.1,251.1 858.5,247.6 866.6,247.7 877.9,244.4 886.0,245.8"/>
+<polyline class="line c2" points="536.0,349.0 547.4,331.2 555.4,322.1 566.8,303.2 574.9,295.3 586.3,284.7 594.3,280.2 605.7,273.5 613.8,283.9 625.2,275.7 633.2,283.1 644.6,274.0 652.7,281.4 664.0,273.0 672.1,279.1 683.5,269.6 691.6,275.5 702.9,266.7 711.0,271.6 722.4,268.5 730.4,269.1 741.8,264.0 749.9,264.3 761.3,258.8 769.3,260.4 780.7,257.4 788.8,259.1 800.2,253.8 808.2,253.8 819.6,250.5 827.7,250.7 839.0,248.4 847.1,249.2 858.5,246.2 866.6,246.8 877.9,241.2 886.0,241.9"/>
+<polyline class="line c3" points="536.0,343.7 547.4,329.7 555.4,318.6 566.8,303.5 574.9,295.5 586.3,284.7 594.3,278.0 605.7,268.5 613.8,259.9 625.2,248.3 633.2,241.1 644.6,232.2 652.7,235.0 664.0,228.5 672.1,225.7 683.5,219.5 691.6,220.5 702.9,210.8 711.0,208.5 722.4,205.8 730.4,207.5 741.8,199.2 749.9,193.8 761.3,188.1 769.3,181.4 780.7,180.5 788.8,176.6 800.2,175.5 808.2,173.0 819.6,171.7 827.7,169.7 839.0,171.0 847.1,168.4 858.5,162.3 866.6,166.7 877.9,158.8 886.0,160.2"/>
+<circle class="ring f3" cx="886.0" cy="160.2" r="4" stroke-width="2"/>
+<text class="end ink" x="899.0" y="164.2">251 ns</text>
+<circle class="ring f2" cx="886.0" cy="241.9" r="4" stroke-width="2"/>
+<text class="end ink" x="899.0" y="245.9">69 ns</text>
+<line class="leader" x1="891.0" y1="245.8" x2="897.0" y2="256.9"/>
+<circle class="ring f1" cx="886.0" cy="245.8" r="4" stroke-width="2"/>
+<text class="end ink" x="899.0" y="260.9">65 ns</text>
+<text class="head ink" x="58" y="424">AVX-512 IFMA target</text>
+<text class="sub ink2" x="58" y="442">Polynomial products, 16-bit coefficients (ns per coefficient)</text>
+<line class="grid" x1="58" y1="658.1" x2="408" y2="658.1"/>
+<text class="tick muted" x="50" y="661.6" text-anchor="end">5</text>
+<line class="grid" x1="58" y1="595.0" x2="408" y2="595.0"/>
+<text class="tick muted" x="50" y="598.5" text-anchor="end">10</text>
+<line class="grid" x1="58" y1="532.0" x2="408" y2="532.0"/>
+<text class="tick muted" x="50" y="535.5" text-anchor="end">20</text>
+<line class="axis" x1="58" y1="662" x2="408" y2="662"/>
+<line class="axis" x1="58.0" y1="662" x2="58.0" y2="666"/>
+<text class="tick muted" x="58.0" y="680" text-anchor="middle">64</text>
+<line class="axis" x1="145.5" y1="662" x2="145.5" y2="666"/>
+<text class="tick muted" x="145.5" y="680" text-anchor="middle">1K</text>
+<line class="axis" x1="233.0" y1="662" x2="233.0" y2="666"/>
+<text class="tick muted" x="233.0" y="680" text-anchor="middle">16K</text>
+<line class="axis" x1="320.5" y1="662" x2="320.5" y2="666"/>
+<text class="tick muted" x="320.5" y="680" text-anchor="middle">256K</text>
+<line class="axis" x1="408.0" y1="662" x2="408.0" y2="666"/>
+<text class="tick muted" x="408.0" y="680" text-anchor="middle">4M</text>
+<text class="tick muted" x="233.0" y="698" text-anchor="middle">Operand coefficients</text>
+<polyline class="line c1" points="58.0,643.5 70.8,636.8 79.9,647.2 92.7,641.6 101.8,642.3 114.5,635.4 123.6,638.5 136.4,632.3 145.5,635.8 158.3,626.5 167.4,626.4 180.2,620.7 189.2,624.8 202.0,616.3 211.1,619.1 223.9,613.0 233.0,614.8 245.8,606.0 254.9,608.2 267.7,602.8 276.8,605.0 289.5,596.8 298.6,598.8 311.4,514.1 320.5,513.5 333.3,507.1 342.4,505.8 355.2,501.9 364.2,501.7 377.0,496.8 386.1,496.4 398.9,490.0 408.0,491.9"/>
+<polyline class="line c2" points="58.0,621.2 70.8,590.4 79.9,611.2 92.7,585.9 101.8,607.0 114.5,600.5 123.6,604.8 136.4,597.4 145.5,598.1 158.3,595.0 167.4,597.6 180.2,590.8 189.2,593.1 202.0,587.3 211.1,587.1 223.9,583.4 233.0,583.1 245.8,578.8 254.9,580.6 267.7,574.5 276.8,575.6 289.5,569.2 298.6,497.1 311.4,490.4 320.5,492.0 333.3,482.3 342.4,482.9 355.2,475.7 364.2,475.3 377.0,469.8 386.1,470.9 398.9,464.7 408.0,467.3"/>
+<circle class="ring f2" cx="408.0" cy="467.3" r="4" stroke-width="2"/>
+<text class="end ink" x="421.0" y="471.3">41 ns</text>
+<circle class="ring f1" cx="408.0" cy="491.9" r="4" stroke-width="2"/>
+<text class="end ink" x="421.0" y="495.9">31 ns</text>
+<text class="head ink" x="536" y="424">AVX2 target</text>
+<text class="sub ink2" x="536" y="442">Polynomial products, 16-bit coefficients (ns per coefficient)</text>
+<line class="grid" x1="536" y1="658.1" x2="886" y2="658.1"/>
+<text class="tick muted" x="528" y="661.6" text-anchor="end">5</text>
+<line class="grid" x1="536" y1="595.0" x2="886" y2="595.0"/>
+<text class="tick muted" x="528" y="598.5" text-anchor="end">10</text>
+<line class="grid" x1="536" y1="532.0" x2="886" y2="532.0"/>
+<text class="tick muted" x="528" y="535.5" text-anchor="end">20</text>
+<line class="axis" x1="536" y1="662" x2="886" y2="662"/>
+<line class="axis" x1="536.0" y1="662" x2="536.0" y2="666"/>
+<text class="tick muted" x="536.0" y="680" text-anchor="middle">64</text>
+<line class="axis" x1="623.5" y1="662" x2="623.5" y2="666"/>
+<text class="tick muted" x="623.5" y="680" text-anchor="middle">1K</text>
+<line class="axis" x1="711.0" y1="662" x2="711.0" y2="666"/>
+<text class="tick muted" x="711.0" y="680" text-anchor="middle">16K</text>
+<line class="axis" x1="798.5" y1="662" x2="798.5" y2="666"/>
+<text class="tick muted" x="798.5" y="680" text-anchor="middle">256K</text>
+<line class="axis" x1="886.0" y1="662" x2="886.0" y2="666"/>
+<text class="tick muted" x="886.0" y="680" text-anchor="middle">4M</text>
+<text class="tick muted" x="711.0" y="698" text-anchor="middle">Operand coefficients</text>
+<polyline class="line c1" points="536.0,634.3 548.8,623.0 557.9,635.4 570.7,625.7 579.8,629.0 592.5,619.2 601.6,623.7 614.4,616.0 623.5,619.2 636.3,609.1 645.4,612.1 658.2,604.8 667.2,608.3 680.0,599.0 689.1,602.5 701.9,595.5 711.0,597.6 723.8,588.6 732.9,591.7 745.7,585.4 754.8,587.9 767.5,579.7 776.6,581.6 789.4,497.0 798.5,498.1 811.3,490.4 820.4,489.9 833.2,487.2 842.2,486.9 855.0,477.2 864.1,481.2 876.9,474.4 886.0,476.6"/>
+<polyline class="line c2" points="536.0,609.5 548.8,587.7 557.9,607.9 570.7,582.5 579.8,607.8 592.5,600.0 601.6,605.6 614.4,599.4 623.5,600.3 636.3,595.6 645.4,598.2 658.2,591.3 667.2,593.4 680.0,587.5 689.1,587.5 701.9,583.7 711.0,583.6 723.8,578.7 732.9,580.3 745.7,573.8 754.8,575.2 767.5,570.5 776.6,498.0 789.4,490.4 798.5,491.8 811.3,483.0 820.4,484.0 833.2,475.5 842.2,476.3 855.0,469.7 864.1,470.6 876.9,465.5 886.0,467.6"/>
+<circle class="ring f2" cx="886.0" cy="467.6" r="4" stroke-width="2"/>
+<text class="end ink" x="899.0" y="471.6">41 ns</text>
+<line class="leader" x1="891.0" y1="476.6" x2="897.0" y2="482.6"/>
+<circle class="ring f1" cx="886.0" cy="476.6" r="4" stroke-width="2"/>
+<text class="end ink" x="899.0" y="486.6">37 ns</text>
+</svg>

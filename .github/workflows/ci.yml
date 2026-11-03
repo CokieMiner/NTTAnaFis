@@ -1,0 +1,493 @@
+name: Rust CI
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  QEMU_VERSION: 11.1.3
+  QEMU_SHA256: 5a8289c7940dc77d3873c81a6c29ba3afe1446fc9d36e77fa1658cdbecb84b22
+
+# Every job checks this repository out under NTTAnaFis, beside CoreAnaFis, as in the
+# local workspace. See README.md in this directory.
+jobs:
+  quality:
+    name: Format, Audits, Clippy & Docs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: NTTAnaFis
+      - uses: ./NTTAnaFis/.github/actions/workspace
+
+      - name: Install Rust Nightly
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt, clippy
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check Formatting
+        run: cargo fmt -p ntt_anafis -p core_anafis -p ntt_anafis_bench --check
+
+      - name: Source Audits
+        working-directory: NTTAnaFis
+        run: |
+          python3 -B tools/structure_audit.py
+          python3 -B tools/import_audit.py
+          python3 -B tools/check_allows.py --check --all-lints
+
+      - name: Native Clippy
+        run: |
+          cargo clippy -p ntt_anafis -p core_anafis --all-targets --all-features -- -D warnings
+          cargo clippy -p ntt_anafis -p core_anafis --all-targets --no-default-features -- -D warnings
+          cargo clippy -p ntt_anafis -p core_anafis --all-targets -- -D warnings
+
+      - name: Documentation
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --no-deps -p ntt_anafis -p core_anafis --all-features
+
+  tools:
+    name: Workflows and Python Tools
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install Actionlint 1.7.12
+        run: |
+          curl --fail --location --output "$RUNNER_TEMP/actionlint.tar.gz" \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum --check --strict
+          mkdir -p "$RUNNER_TEMP/actionlint"
+          tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP/actionlint" actionlint
+          echo "$RUNNER_TEMP/actionlint" >> "$GITHUB_PATH"
+      - name: Install ShellCheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+      - name: Validate Workflows
+        run: actionlint
+      - name: Run Tool Regressions
+        run: python3 -B tools/audit.py --tests
+
+  msrv:
+    name: Minimum Rust (1.96.0, CoreAnaFis 1.85.0)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: NTTAnaFis
+      - uses: ./NTTAnaFis/.github/actions/workspace
+
+      - name: Install Rust 1.85.0
+        uses: dtolnay/rust-toolchain@1.85.0
+
+      - name: Install Rust 1.96.0
+        uses: dtolnay/rust-toolchain@1.96.0
+        with:
+          targets: >-
+            i686-unknown-linux-gnu,aarch64-unknown-linux-gnu,armv7-unknown-linux-gnueabihf,
+            s390x-unknown-linux-gnu,loongarch64-unknown-linux-gnu,powerpc64le-unknown-linux-gnu,
+            powerpc64-unknown-linux-gnu,riscv64gc-unknown-linux-gnu,wasm32-unknown-unknown
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check CoreAnaFis
+        run: |
+          cargo +1.85.0 check -p core_anafis
+          cargo +1.85.0 check -p core_anafis --features rayon
+
+      # s390x vector operands of `asm!` set the minimum; every other target builds
+      # from Rust 1.93.
+      - name: Check NTTAnaFis on Every Target
+        run: |
+          for target in x86_64-unknown-linux-gnu i686-unknown-linux-gnu \
+            aarch64-unknown-linux-gnu armv7-unknown-linux-gnueabihf s390x-unknown-linux-gnu \
+            loongarch64-unknown-linux-gnu powerpc64le-unknown-linux-gnu \
+            powerpc64-unknown-linux-gnu riscv64gc-unknown-linux-gnu wasm32-unknown-unknown; do
+            cargo +1.96.0 check -p ntt_anafis --target "$target" --all-features
+            cargo +1.96.0 check -p ntt_anafis --target "$target" --no-default-features
+          done
+          RUSTFLAGS="-C target-feature=+vector" \
+            cargo +1.96.0 check -p ntt_anafis --target s390x-unknown-linux-gnu --no-default-features
+          RUSTFLAGS="-C target-feature=+vector,+vector-enhancements-1" \
+            cargo +1.96.0 check -p ntt_anafis --target s390x-unknown-linux-gnu --no-default-features
+
+  check_archs:
+    name: Clippy & Assembly (every target and backend)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: NTTAnaFis
+      - uses: ./NTTAnaFis/.github/actions/workspace
+
+      - name: Install Rust Nightly
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: clippy
+          targets: >-
+            i686-unknown-linux-gnu,aarch64-unknown-linux-gnu,armv7-unknown-linux-gnueabihf,
+            s390x-unknown-linux-gnu,loongarch64-unknown-linux-gnu,powerpc64le-unknown-linux-gnu,
+            powerpc64-unknown-linux-gnu,riscv64gc-unknown-linux-gnu,wasm32-unknown-unknown
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: check-archs
+
+      # Clippy does not assemble `asm!` text, so every configuration also builds.
+      # Without `std`, target features fix the backend at compile time.
+      - name: Lint and Assemble
+        run: |
+          failures=0
+          check() {
+            local target=$1 features=$2 flags=$3
+            echo "::group::$target $features $flags"
+            if RUSTFLAGS="$flags" cargo clippy -p ntt_anafis --lib --target "$target" ${features:+"$features"} -- -D warnings \
+              && RUSTFLAGS="$flags" cargo build -p ntt_anafis --lib --target "$target" ${features:+"$features"}; then
+              echo "::endgroup::"
+            else
+              echo "::endgroup::"
+              echo "::error::$target $features $flags"
+              failures=$((failures + 1))
+            fi
+          }
+          for target in x86_64-unknown-linux-gnu i686-unknown-linux-gnu \
+            aarch64-unknown-linux-gnu armv7-unknown-linux-gnueabihf s390x-unknown-linux-gnu \
+            loongarch64-unknown-linux-gnu powerpc64le-unknown-linux-gnu \
+            powerpc64-unknown-linux-gnu riscv64gc-unknown-linux-gnu wasm32-unknown-unknown; do
+            check "$target" "" ""
+            check "$target" --no-default-features ""
+          done
+          check x86_64-unknown-linux-gnu --no-default-features "-C target-feature=+avx2,+fma"
+          check x86_64-unknown-linux-gnu --no-default-features "-C target-feature=+avx512f"
+          check x86_64-unknown-linux-gnu --no-default-features "-C target-feature=+avx512f,+avx512ifma,+avx512dq"
+          check i686-unknown-linux-gnu --no-default-features "-C target-feature=+avx2,+fma"
+          check armv7-unknown-linux-gnueabihf "" "-C target-feature=+vfp4,+fp-armv8"
+          check s390x-unknown-linux-gnu --no-default-features "-C target-feature=+vector"
+          check s390x-unknown-linux-gnu --no-default-features "-C target-feature=+vector,+vector-enhancements-1"
+          check loongarch64-unknown-linux-gnu --no-default-features "-C target-feature=+lsx"
+          check loongarch64-unknown-linux-gnu --no-default-features "-C target-feature=+lsx,+lasx"
+          check riscv64gc-unknown-linux-gnu "" "-C target-feature=+zfa"
+          check riscv64gc-unknown-linux-gnu --no-default-features "-C target-feature=+v"
+          check powerpc64-unknown-linux-gnu --no-default-features "-C target-feature=+vsx"
+          echo "failures=$failures"
+          test "$failures" -eq 0
+
+  test:
+    name: Test (native x86_64)
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: NTTAnaFis
+      - uses: ./NTTAnaFis/.github/actions/workspace
+
+      - name: Install Rust Stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run Tests
+        run: |
+          cargo test -p core_anafis
+          cargo test -p core_anafis --features rayon
+          cargo test -p ntt_anafis
+          cargo test -p ntt_anafis --all-features
+          cargo test -p ntt_anafis --no-default-features
+
+      # The benchmarks link GMP through `rug`, which builds it from source.
+      - name: Lint and Compile Benchmarks
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y m4
+          cargo clippy -p ntt_anafis_bench --all-targets -- -D warnings
+          cargo bench -p ntt_anafis_bench --no-run
+
+  # Intel SDE emulates each CPU, so every x86 backend runs on any runner. With
+  # `std` the run-time selector picks the widest unit the emulated CPU has, and
+  # the kernel tests compare every admitted unit with the portable kernels.
+  # Instructions the runner lacks run in software, often a hundred times slower,
+  # so SDE runs the kernel, CRT, and complete-product tests. The transform driver
+  # and the scalar fields do not depend on the unit and run natively and on QEMU.
+  test_x86:
+    name: Test (x86 ${{ matrix.name }}, Intel SDE)
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: AVX-512 IFMA, cpu: spr, features: --all-features, rustflags: "" }
+          - { name: AVX-512F, cpu: skx, features: --all-features, rustflags: "" }
+          - { name: AVX2, cpu: hsw, features: --all-features, rustflags: "" }
+          - { name: portable, cpu: snb, features: --all-features, rustflags: "" }
+          - { name: fixed AVX-512 IFMA, cpu: spr, features: --no-default-features, rustflags: "-C target-cpu=sapphirerapids" }
+          - { name: fixed AVX-512F, cpu: skx, features: --no-default-features, rustflags: "-C target-cpu=skylake-avx512" }
+          - { name: fixed AVX2, cpu: hsw, features: --no-default-features, rustflags: "-C target-cpu=haswell" }
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: NTTAnaFis
+      - uses: ./NTTAnaFis/.github/actions/workspace
+
+      - name: Install Rust Stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: x86-${{ matrix.cpu }}${{ matrix.features }}
+
+      - name: Install Intel SDE
+        uses: petarpetrovt/setup-sde@v6.0
+        with:
+          environmentVariableName: SDE_PATH
+          sdeVersion: 10.13.1
+
+      - name: Allow SDE to Attach
+        run: echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
+
+      # SDE emulates whatever this CPU lacks; the flags explain the run time.
+      - name: Host CPU
+        run: |
+          grep -m1 "model name" /proc/cpuinfo
+          grep -m1 "^flags" /proc/cpuinfo | tr ' ' '\n' \
+            | grep -x -E "avx2|fma|avx512f|avx512dq|avx512ifma" | tr '\n' ' '
+          echo
+
+      - name: Build Test Binary
+        id: build
+        env:
+          RUSTFLAGS: ${{ matrix.rustflags }}
+        run: |
+          binary=$(cargo test -p ntt_anafis --lib ${{ matrix.features }} --no-run --message-format=json \
+            | jq -r 'select(.reason == "compiler-artifact" and .target.name == "ntt_anafis" and .profile.test) | .executable')
+          test -x "$binary"
+          echo "binary=$binary" >> "$GITHUB_OUTPUT"
+
+      - name: Run Tests Under SDE
+        run: |
+          "$SDE_PATH/sde64" -${{ matrix.cpu }} -- "${{ steps.build.outputs.binary }}" \
+            --test-threads=4 --skip transform:: --skip field::
+
+  qemu:
+    name: QEMU 11.1.3 User Emulators
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Cache QEMU
+        id: cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ runner.temp }}/qemu
+          key: qemu-${{ env.QEMU_VERSION }}-ubuntu-24.04-linux-user
+
+      - name: Build QEMU
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libglib2.0-dev python3-venv
+          curl --fail --location --output "$RUNNER_TEMP/qemu.tar.xz" \
+            "https://download.qemu.org/qemu-$QEMU_VERSION.tar.xz"
+          echo "$QEMU_SHA256  $RUNNER_TEMP/qemu.tar.xz" | sha256sum --check --strict
+          tar -xf "$RUNNER_TEMP/qemu.tar.xz" -C "$RUNNER_TEMP"
+          mkdir "$RUNNER_TEMP/qemu-build"
+          cd "$RUNNER_TEMP/qemu-build"
+          "$RUNNER_TEMP/qemu-$QEMU_VERSION/configure" --disable-system --disable-tools --disable-docs \
+            --target-list=aarch64-linux-user,s390x-linux-user,ppc64le-linux-user,ppc64-linux-user,riscv64-linux-user,loongarch64-linux-user
+          ninja
+          mkdir "$RUNNER_TEMP/qemu"
+          cp qemu-aarch64 qemu-s390x qemu-ppc64le qemu-ppc64 qemu-riscv64 qemu-loongarch64 "$RUNNER_TEMP/qemu/"
+
+  # `cross` builds one static test binary per target, and QEMU runs it once per
+  # vector unit. The images' own QEMU predates several of these CPU switches.
+  test_cross:
+    name: Test (${{ matrix.name }})
+    needs: [quality, qemu]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    continue-on-error: ${{ matrix.experimental == true }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: aarch64 NEON
+            target: aarch64-unknown-linux-gnu
+            qemu: aarch64
+            cpus: max
+          - name: s390x vector, enhancements 1
+            target: s390x-unknown-linux-gnu
+            qemu: s390x
+            cpus: >-
+              max
+              max,vxeh=off,vxeh2=off,vxeh3=off
+              max,vxeh=off,vxeh2=off,vxeh3=off,vx=off
+          - name: POWER VSX
+            target: powerpc64le-unknown-linux-gnu
+            qemu: ppc64le
+            cpus: power8 power9
+          - name: LoongArch LSX, LASX
+            target: loongarch64-unknown-linux-gnu
+            qemu: loongarch64
+            cpus: la464 la464,lasx=off
+          - name: RISC-V V
+            target: riscv64gc-unknown-linux-gnu
+            qemu: riscv64
+            cpus: rv64,v=on,vlen=128 rv64,v=on,vlen=256 rv64,v=on,vlen=512 rv64,v=off
+          # Never run before; stable Rust compiles its scalar kernels only.
+          - name: big-endian powerpc64 (experimental)
+            target: powerpc64-unknown-linux-gnu
+            qemu: ppc64
+            cpus: power8
+            experimental: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: NTTAnaFis
+      - uses: ./NTTAnaFis/.github/actions/workspace
+
+      - name: Install Rust Stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross
+        uses: taiki-e/install-action@cross
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: cross-${{ matrix.target }}
+
+      - name: Restore QEMU
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/qemu
+          key: qemu-${{ env.QEMU_VERSION }}-ubuntu-24.04-linux-user
+          fail-on-cache-miss: true
+
+      # The container mounts the target directory at /target. `cross` also prints
+      # plain text on standard output, so jq skips lines that are not JSON.
+      - name: Build Static Test Binary
+        id: build
+        env:
+          RUSTFLAGS: -C target-feature=+crt-static
+          CROSS_TARGET_LOONGARCH64_UNKNOWN_LINUX_GNU_IMAGE: ghcr.io/cross-rs/loongarch64-unknown-linux-gnu:main
+        run: |
+          executable=$(cross test -p ntt_anafis --lib --all-features --no-run --target ${{ matrix.target }} --message-format=json \
+            | jq -R -r 'fromjson? | select(.reason == "compiler-artifact" and .target.name == "ntt_anafis" and .profile.test) | .executable')
+          binary="$GITHUB_WORKSPACE/target/${executable#/target/}"
+          test -x "$binary"
+          echo "binary=$binary" >> "$GITHUB_OUTPUT"
+
+      - name: Run Under QEMU
+        run: |
+          failures=0
+          for cpu in ${{ matrix.cpus }}; do
+            echo "::group::qemu-${{ matrix.qemu }} -cpu $cpu"
+            if "$RUNNER_TEMP/qemu/qemu-${{ matrix.qemu }}" -cpu "$cpu" "${{ steps.build.outputs.binary }}" --test-threads=4; then
+              echo "::endgroup::"
+            else
+              echo "::endgroup::"
+              echo "::error::tests failed under -cpu $cpu"
+              failures=$((failures + 1))
+            fi
+          done
+          test "$failures" -eq 0
+
+  # Scalar 32-bit products: x86 runs natively in the container, and armv7 under the
+  # image's QEMU, where its static binaries do not start.
+  test_container:
+    name: Test (${{ matrix.target }})
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [ i686-unknown-linux-gnu, armv7-unknown-linux-gnueabihf ]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: NTTAnaFis
+      - uses: ./NTTAnaFis/.github/actions/workspace
+
+      - name: Install Rust Stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross
+        uses: taiki-e/install-action@cross
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: cross-${{ matrix.target }}
+
+      - name: Run Tests
+        run: |
+          cross test -p ntt_anafis --lib --all-features --target ${{ matrix.target }}
+          cross test -p ntt_anafis --lib --no-default-features --target ${{ matrix.target }}
+
+  # A version tag publishes after every check passes. crates.io trusted publishing
+  # exchanges the job's OIDC identity for a short-lived token.
+  publish:
+    name: Publish to crates.io
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [ quality, tools, msrv, check_archs, test, test_x86, test_cross, test_container ]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: crates-io
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: NTTAnaFis
+      - uses: ./NTTAnaFis/.github/actions/workspace
+
+      - name: Install Rust Stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Check the Tag Against the Package Version
+        run: |
+          version=$(cargo metadata --format-version 1 --no-deps \
+            | jq -r '.packages[] | select(.name == "ntt_anafis") | .version')
+          test "${GITHUB_REF_NAME#v}" = "$version"
+
+      - name: Authenticate
+        id: auth
+        uses: rust-lang/crates-io-auth-action@v1
+
+      - name: Publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        run: cargo publish -p ntt_anafis
