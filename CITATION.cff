@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "NTTAnaFis: Exact multi-prime number-theoretic transforms and native-limb multiplication in pure Rust"
+url: "https://github.com/CokieMiner/NTTAnaFis"
+authors:
+  - family-names: Martins
+    given-names: Pedro
+    orcid: "https://orcid.org/0009-0001-8170-2930"
+version: 0.1.0
+date-released: "2026-08-10"
+license: Apache-2.0
+keywords:
+  - ntt
+  - number-theoretic-transform
+  - arbitrary-precision
+  - multiplication
+  - modular
+  - rust
+  - mathematics

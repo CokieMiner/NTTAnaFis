@@ -1,0 +1,39 @@
+name: AnaFis workspace
+description: >-
+  Checks CoreAnaFis out beside this repository and writes the workspace manifest
+  that the two share locally. The repository must already be checked out under
+  the path NTTAnaFis.
+
+inputs:
+  core-repository:
+    description: GitHub repository of CoreAnaFis.
+    default: CokieMiner/CoreAnaFis
+  core-ref:
+    description: Branch, tag, or commit of CoreAnaFis.
+    default: main
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v5
+      with:
+        repository: ${{ inputs.core-repository }}
+        ref: ${{ inputs.core-ref }}
+        path: CoreAnaFis
+
+    # The path dependency `../CoreAnaFis` resolves inside this workspace, and the
+    # test profile optimizes the arithmetic crates as the local workspace does.
+    - name: Write the workspace manifest
+      shell: bash
+      run: |
+        cat > Cargo.toml <<'EOF'
+        [workspace]
+        resolver = "3"
+        members = ["CoreAnaFis", "NTTAnaFis", "NTTAnaFis/bench"]
+
+        [profile.test.package.core_anafis]
+        opt-level = 2
+
+        [profile.test.package.ntt_anafis]
+        opt-level = 2
+        EOF

@@ -1,0 +1,21 @@
+# Rust build artifacts
+/target
+
+# Editor and OS noise
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Local environment files
+.env
+
+# Python caches (tooling scripts)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Profiling output
+*.profraw
+perf.data*
